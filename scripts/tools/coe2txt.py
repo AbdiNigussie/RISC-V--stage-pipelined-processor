@@ -2,13 +2,13 @@
 import sys
 
 def coe_to_disassembly(coe_file, txt_file):
-    """将COE文件转换为反汇编文本"""
+    """Convert a COE file to disassembly text"""
     
-    # 读取COE文件
+    # Read the COE file
     with open(coe_file, 'r') as f:
         lines = f.readlines()
     
-    # 提取指令
+    # Extract instructions
     instructions = []
     in_vector = False
     
@@ -29,7 +29,7 @@ def coe_to_disassembly(coe_file, txt_file):
                 if inst.strip():
                     instructions.append(int(inst.strip(), 16))
     
-    # 简单的反汇编表
+    # Simple disassembly register-name table
     reg_names = [
         'zero', 'ra', 'sp', 'gp', 'tp', 't0', 't1', 't2',
         's0', 's1', 'a0', 'a1', 'a2', 'a3', 'a4', 'a5',
@@ -45,7 +45,7 @@ def coe_to_disassembly(coe_file, txt_file):
             pc = addr * 4
             inst_hex = f"{inst:08x}"
             
-            # 解码
+            # Decode
             opcode = inst & 0x7F
             rd = (inst >> 7) & 0x1F
             rs1 = (inst >> 15) & 0x1F
@@ -53,10 +53,10 @@ def coe_to_disassembly(coe_file, txt_file):
             funct3 = (inst >> 12) & 0x7
             funct7 = (inst >> 25) & 0x7F
             imm_i = (inst >> 20) & 0xFFF
-            if imm_i & 0x800:  # 符号扩展
+            if imm_i & 0x800:  # Sign extension
                 imm_i -= 0x1000
             
-            # 识别指令
+            # Identify the instruction
             assembly = "unknown"
             
             if opcode == 0x13:  # I-type

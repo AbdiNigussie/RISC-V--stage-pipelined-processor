@@ -60,7 +60,7 @@ module top(
         .inst_addr  	(inst_addr        ),
         .instruction	(instruction      ),
         // DRAM & MMIO Interface
-        .perip_clk   	(~cpu_clk        ),//小巧思，你就学吧
+        .perip_clk   	(~cpu_clk        ),//A neat little trick: use the inverted CPU clock.
         .perip_addr 	(perip_addr       ),
         .perip_wdata	(perip_wdata      ),
         .perip_wen  	(perip_wen        ),

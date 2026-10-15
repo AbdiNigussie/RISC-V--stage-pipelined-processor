@@ -21,38 +21,38 @@ module RegisterFile(
         RD2 = 32'b0;
     end
     
-    // 上升沿写入
+    // Write on the rising clock edge
     always @(posedge CLK) begin
         if(WE3 && A3 != 0) RegBank[A3] <= WD3;
     end
     
-    // 组合逻辑读取 - RD1
+    // Combinational read - RD1
     always @(*) begin
         if(A1 == 5'h0) begin
-            // x0寄存器硬连线到0
+            // Register x0 is hardwired to zero
             RD1 = 32'h0000_0000;
         end else begin
             if(WE3 && (A1 == A3) && (A3 != 0)) begin
-                // 数据前递：如果正在写入的寄存器是当前要读取的
-                RD1 = WD3;  // 使用要写入的新值
+                // Forward data if the register being written is also being read
+                RD1 = WD3;  // Use the new value being written
             end else begin
-                // 正常读取寄存器值
+                // Read the stored register value normally
                 RD1 = RegBank[A1];
             end
         end
     end
     
-    // 组合逻辑读取 - RD2
+    // Combinational read - RD2
     always @(*) begin
         if(A2 == 5'h0) begin
-            // x0寄存器硬连线到0
+            // Register x0 is hardwired to zero
             RD2 = 32'h0000_0000;
         end else begin
             if(WE3 && (A2 == A3) && (A3 != 0)) begin
-                // 数据前递：如果正在写入的寄存器是当前要读取的
-                RD2 = WD3;  // 使用要写入的新值
+                // Forward data if the register being written is also being read
+                RD2 = WD3;  // Use the new value being written
             end else begin
-                // 正常读取寄存器值
+                // Read the stored register value normally
                 RD2 = RegBank[A2];
             end
         end

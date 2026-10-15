@@ -16,7 +16,7 @@ module Control(
 
 always @(*) begin
     lui = 0;
-    write_mem = 2'b11;//修bug,不知道作者在瞎改啥，为啥不直接输出呢，无语
+    write_mem = 2'b11;//Bug fix: unclear why the author changed this instead of driving the output directly.
     case (opcode)
         // lui
         7'b0110111:begin
@@ -63,7 +63,7 @@ always @(*) begin
             pcImm_NEXTPC_rs1Imm = 2'b10;
             extOP = 3'b000;
         end
-        // B型指令
+        // B-type instructions
         7'b1100011:begin
             write_reg = 0;
             aluOut_WB_memOut = 0;
@@ -102,7 +102,7 @@ always @(*) begin
                 end
             endcase
         end
-        // L型指令
+        // Load instructions
         7'b0000011:begin
             write_reg = 1;
             aluOut_WB_memOut = 1;
@@ -138,7 +138,7 @@ always @(*) begin
                 end
             endcase
         end
-        // S型指令
+        // S-type instructions
         7'b0100011:begin
             write_reg = 0;
             aluOut_WB_memOut = 0;
@@ -166,7 +166,7 @@ always @(*) begin
                 end
             endcase
         end
-        // I型指令
+        // I-type instructions
         7'b0010011:begin
             write_reg = 1;
             aluOut_WB_memOut = 0;
@@ -218,7 +218,7 @@ always @(*) begin
                 end
             endcase
         end
-        // R型指令
+        // R-type instructions
         7'b0110011:begin
             write_reg = 1;
             aluOut_WB_memOut = 0;

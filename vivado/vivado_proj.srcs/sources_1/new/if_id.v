@@ -12,7 +12,7 @@ always @(posedge clk) begin
         id_pc = 32'd0;
         id_instr = {12'h0, 5'b0, 3'b000, 5'b0, 7'b0010011};
     end else if(pause) begin
-        // ¿Õ²Ù×÷
+        // No operation
     end else begin
         id_pc <= if_pc;
         id_instr <= if_instr;
