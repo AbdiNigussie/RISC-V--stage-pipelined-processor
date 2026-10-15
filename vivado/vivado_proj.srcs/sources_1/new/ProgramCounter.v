@@ -14,11 +14,11 @@ always @(posedge CLK) begin
             PC <= 0;
             if_pc <= 0;
         end else if(flush) begin
-            PC <= NextPC;//并非冗余，有个优先级的关系
+            PC <= NextPC;//Not redundant: this preserves priority.
             if_pc <= NextPC;
         end else if(pause) begin
-            // 空操作
-            // 阻止寄存器值改变
+            // No operation
+            // Keep the register value unchanged
         end else begin
             PC <= NextPC;
             if_pc<= NextPC;

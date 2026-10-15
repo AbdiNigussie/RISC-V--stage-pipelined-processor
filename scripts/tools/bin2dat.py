@@ -4,13 +4,13 @@ def bin2hex(bin_file, coe_file):
     with open(bin_file, 'rb') as f:
         data = f.read()
 
-    # 每4字节小端转为十六进制字符串
+    # Convert each 4-byte little-endian word to a hexadecimal string
     words = [data[i:i+4] for i in range(0, len(data), 4)]
     hex_words = []
     for idx, w in enumerate(words):
         if len(w) < 4:
             w = w.ljust(4, b'\x00')
-        # 小端转大端
+        # Reverse little-endian bytes for big-endian hexadecimal notation
         hex_str = ''.join(['{:02x}'.format(b) for b in w[::-1]])
         hex_words.append(hex_str)
 

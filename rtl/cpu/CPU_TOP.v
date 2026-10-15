@@ -17,10 +17,10 @@ module CPU (
     input  [31:0]  perip_rdata
 );
 //draft
-wire pause; // 数据冒险停顿
-wire flush; // 控制冒险刷新
-wire [1: 0] forwardA, forwardB; // 数据冒险旁路
-wire forwardC; // 数据冒险旁路
+wire pause; // Stall for a data hazard
+wire flush; // Flush for a control hazard
+wire [1: 0] forwardA, forwardB; // Forwarding for data hazards
+wire forwardC; // Forwarding for data hazards
 //111
 wire flush_pred;
 reg flush_reg;
@@ -28,16 +28,16 @@ assign flush = flush_reg;
 reg flush_pred_reg;
 assign flush_pred = flush_pred_reg;
 
-// IF阶段
-wire [31: 0] if_pc; // 指令地址
+// IF stage
+wire [31: 0] if_pc; // Instruction address
 //assign pc = if_pc;
-wire [31: 0] if_instr; // 指令
+wire [31: 0] if_instr; // Instruction
 assign if_instr = instruction;//
 
-// id阶段
-wire [31: 0] id_pc; // 指令地址
-wire [31: 0] id_instruction; // 指令
-wire [6: 0] id_opcode; // 操作码
+// ID stage
+wire [31: 0] id_pc; // Instruction address
+wire [31: 0] id_instruction; // Instruction
+wire [6: 0] id_opcode; // Opcode
 wire [2: 0] id_func3; 
 wire [6: 0] id_func7;
 wire id_MemtoReg;
@@ -50,51 +50,51 @@ wire [31:0] id_RD2;
 wire [31:0]id_imm_32;
 wire [4: 0] id_aluc;
 wire id_AluSrc1; //
-wire [1: 0] id_AluSrc2; //判断用的
+wire [1: 0] id_AluSrc2; //ALU operand selection control
 wire [1: 0] id_MemWrite; 
 wire [2: 0] id_MemRead;
 wire [2: 0] id_extOP;
 wire [1: 0] id_PcorRs1;
-wire id_lui;//针对我亲爱的lui
+wire id_lui;//Special handling for LUI
 wire id_isBranchInstr;
-// ex阶段
-wire [4:  0] ex_aluc; // 控制 ALU运算
-wire ex_MemtoReg; // 二路选择器
-wire ex_AluSrc1; // 二路选择器
-wire[1: 0] ex_AluSrc2; // 三路选择器
-wire ex_RegWrite; // 寄存器写信号
-wire [1: 0] ex_MemWrite; // 写内存信号
-wire [2: 0] ex_MemRead; // 读内存信号
-wire[1: 0] ex_PcorRs1; // 无条件跳转
+// EX stage
+wire [4:  0] ex_aluc; // ALU operation control
+wire ex_MemtoReg; // 2-to-1 multiplexer control
+wire ex_AluSrc1; // 2-to-1 multiplexer control
+wire[1: 0] ex_AluSrc2; // 3-to-1 multiplexer control
+wire ex_RegWrite; // Register write enable
+wire [1: 0] ex_MemWrite; // Memory write control
+wire [2: 0] ex_MemRead; // Memory read control
+wire[1: 0] ex_PcorRs1; // Unconditional jump
 wire [31: 0] ex_pc; 
 wire [31: 0] ex_RD1, ex_RD2;
 wire [31: 0] ex_real_RD1, ex_real_RD2;
 wire [31: 0] ex_imm32;
 wire [4: 0] ex_A3, ex_A1, ex_A2;
-wire [31: 0] ex_pcImm, ex_rs1Imm; // 分支
-wire [31: 0] ex_Result; // ALu的输出
-wire ex_conditionBranch; // 条件分支
+wire [31: 0] ex_pcImm, ex_rs1Imm; // Branch
+wire [31: 0] ex_Result; // ALU output
+wire ex_conditionBranch; // Conditional branch
 wire ex_lui;
 wire [31:0] ex_Alu_data1;
 wire [31:0] ex_Alu_data2;
 wire ex_isBranchInstr;
-// me阶段
+// MEM stage
 wire [31:0] me_pc;
-wire me_MemtoReg; // 二路选择器
-wire me_RegWrite; // 寄存器写信号
-wire [1: 0] me_MemWrite; // 写内存信号
-wire [2: 0] me_MemRead; // 读内存信号
-wire[1: 0] me_PcorRs1; // 无条件跳转
-wire me_conditionBranch; // 条件分支
-wire [31: 0] me_pcImm, me_rs1Imm; // 分支
-wire [31: 0] me_Result; // ALu的输出
+wire me_MemtoReg; // 2-to-1 multiplexer control
+wire me_RegWrite; // Register write enable
+wire [1: 0] me_MemWrite; // Memory write control
+wire [2: 0] me_MemRead; // Memory read control
+wire[1: 0] me_PcorRs1; // Unconditional jump
+wire me_conditionBranch; // Conditional branch
+wire [31: 0] me_pcImm, me_rs1Imm; // Branch
+wire [31: 0] me_Result; // ALU output
 wire [31: 0] me_RD2;
 wire [4: 0] me_A3;
 wire [4: 0] me_A2;
 wire [31: 0] me_real_RD2;
 wire [31: 0] me_outMem;
 wire me_isBranchInstr;
-// wb阶段
+// WB stage
 wire wb_MemtoReg; 
 wire wb_RegWrite;
 wire [31: 0] wb_outMem;
@@ -122,7 +122,7 @@ wire [31:0] NextPC;
 assign NextPC = NextPC_reg;
 
 
-//decoder 部分
+//Decoder section
 
 
  Decoder Decoder(
@@ -135,7 +135,7 @@ assign NextPC = NextPC_reg;
         .rs2(id_A2)
     );
     
-// Control 部分
+// Control section
 
 
 
@@ -148,22 +148,22 @@ Control Control(
     .rs1Data_EX_PC(id_AluSrc1), 
     .rs2Data_EX_imm32_4(id_AluSrc2),
     .write_reg(id_RegWrite),
-    .write_mem(id_MemWrite), //用于mask
-    .read_mem(id_MemRead),// 用于mask，注意位宽3
+    .write_mem(id_MemWrite), //Used for masking
+    .read_mem(id_MemRead),// Used for masking; note the 3-bit width
     .extOP(id_extOP),
     .pcImm_NEXTPC_rs1Imm(id_PcorRs1),
     .lui(id_lui),
     .a(id_isBranchInstr)
 );
 
-//Extend部分
+//Immediate extension section
 
 Extend Extend(
     .instr(id_instruction),
     .extOP(id_extOP),
     .imm_32(id_imm_32)
 );
-//寄存器部分   
+//Register file section
 RegisterFile RegisterFile(
             .CLK(clk),
             .WE3(wb_RegWrite),     
@@ -174,7 +174,7 @@ RegisterFile RegisterFile(
             .RD1(id_RD1),
             .RD2(id_RD2)
         );   
-// Hazard 部分
+// Hazard handling section
 
 hazard_detection_unit HAZARD_DETECTION_UNIT(
     .ex_readMem(ex_MemRead),
@@ -190,7 +190,7 @@ assign id_target_pc = id_pc + id_imm_32;
 
 
 // ********************************
-//         id_ex 寄存器
+//         id_ex pipeline register
 // ********************************
 id_ex ID_EX(
     .clk(clk),
@@ -235,14 +235,14 @@ id_ex ID_EX(
     .ex_isBranchInstr(ex_isBranchInstr)
 );   
   
-// 俺是废物
-// ex阶段总结来说，就是不断的数据选择
-// 处理前馈，再选择alu来源，地址跳转就不在这算了，等会把imm_32,pc,这些数据传mem过去就行
-// 算了还是在这加吧
-// Alu部分，这里考虑lui多加根线
-// 注意在alu部分，由m，w俩个数据前馈
-// 然后还有一个特殊的前馈，load，store，刚好来的及
-// 写一个数据前馈
+// I am hopeless at this.
+// The EX stage is essentially a sequence of data selections.
+// Handle forwarding, then select ALU operands; initially, jump targets were to be computed in MEM using imm_32 and pc.
+// On second thought, compute them here instead.
+// ALU section: add an extra signal for LUI.
+// ALU inputs can be forwarded from the MEM and WB stages.
+// There is also a special load-to-store forwarding path; the data arrives just in time.
+// Implement data forwarding.
 
 forward_unit FORWARD_UNIT(
     .me_writeReg(me_RegWrite),
@@ -260,13 +260,13 @@ forward_unit FORWARD_UNIT(
 );
 
 
-//先考虑要不要前馈
+//First determine whether forwarding is needed.
 assign ex_real_RD1 = (forwardA[1]) ? wb_WD3 : (forwardA[0]) ? me_Result : ex_RD1;
 assign ex_real_RD2 = (forwardB[1]) ? wb_WD3 : (forwardB[0]) ? me_Result : ex_RD2;
 
-assign ex_Alu_data1 = (ex_lui) ?  0 : (ex_AluSrc1) ? ex_pc : ex_real_RD1;// lui 特殊处理一下,妈的真麻烦    
-assign ex_Alu_data2 = (ex_AluSrc2[1]) ? 4 : (ex_AluSrc2[0]) ? ex_imm32 : ex_real_RD2;//这里也是究极shi山
-// ex_pcImm,ex_rs1Imm在这把这俩傻鸟算了
+assign ex_Alu_data1 = (ex_lui) ?  0 : (ex_AluSrc1) ? ex_pc : ex_real_RD1;// Special-case LUI; this is a real nuisance.
+assign ex_Alu_data2 = (ex_AluSrc2[1]) ? 4 : (ex_AluSrc2[0]) ? ex_imm32 : ex_real_RD2;//This is another particularly messy expression.
+// Compute both ex_pcImm and ex_rs1Imm here.
 assign ex_pcImm = ex_imm32 + ex_pc;
 assign ex_rs1Imm = ex_imm32 + ex_real_RD1;
 Alu Alu(
@@ -278,7 +278,7 @@ Alu Alu(
 );
 
 // ********************************
-//         ex_me 寄存器
+//         ex_me pipeline register
 // ********************************
 ex_me EX_ME(
     .clk(clk),
@@ -323,7 +323,7 @@ Memdata u_Memdata(
 );
 assign  me_real_RD2 = (forwardC) ?  wb_WD3 : me_RD2;
 // ********************************
-//         me_wb 寄存器
+//         me_wb pipeline register
 // ********************************
 me_wb ME_WB(
     .clk(clk),
@@ -343,11 +343,11 @@ me_wb ME_WB(
 
 
 
-// PC 部分
-//其实这里有考虑是封装在模块内，综合考虑后还是放外面    
-//说实话，always放外面有点不美观,可放里面又觉得引线麻烦
-//折中一点，赋值在这体现，加法前面写，显得不那么冗长
-//注意多周期的时候这里应该用的是me阶段的，先不写BTA吧，不太会写
+// PC section
+//Considered encapsulating this in a module, but ultimately kept it outside.
+//Keeping the always block outside looks awkward, but putting it inside complicates the wiring.
+//As a compromise, keep assignments here and additions above to reduce clutter.
+//For multicycle operation, use the MEM-stage values here; BTA is omitted for now because its implementation is unclear.
 
 always @(*) begin
     if(~me_conditionBranch && me_isBranchInstr) begin
@@ -376,17 +376,17 @@ ProgramCounter ProgramCounter(
             .PC(pc),
             .if_pc(if_pc)
         );
-// 内存部分
-// 这里还有点麻烦
-// 主要是wen信号那,唉凑合着用吧
-// 所以读有符号数到底在哪实现
-// 后面不行加个专门模块把数据搞出来
-// 感觉躲不掉，还是直接加吧
+// Memory section
+// This section is still somewhat awkward.
+// The main difficulty is the wen signal; keep the current approach for now.
+// Where should signed-load handling be implemented?
+// If necessary, add a dedicated module to extract the data.
+// A dedicated module seems unavoidable, so add it now.
 
 assign perip_addr = me_Result;
 assign perip_wdata = me_real_RD2;
 assign perip_wen = !(me_MemWrite == 2'b11);
-assign perip_mask = (perip_wen) ? me_MemWrite : me_MemRead[1:0];//别说，还挺合理的
+assign perip_mask = (perip_wen) ? me_MemWrite : me_MemRead[1:0];//This selection is actually quite reasonable.
 
 
 assign wb_WD3 = (wb_MemtoReg) ?  wb_outMem : wb_Result ;

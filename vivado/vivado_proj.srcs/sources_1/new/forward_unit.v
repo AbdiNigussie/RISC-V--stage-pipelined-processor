@@ -16,7 +16,7 @@ always @(*) begin
     if(wb_writeReg && (wb_rd != 5'd0) && (wb_rd == ex_rs1)) begin
         ex_forwardA = 2'b10;
     end
-//藏了一个优先级小技巧，先读mem，在always语块下从上至下读,所以放下面覆盖
+//Priority trick: prefer MEM forwarding; later assignments in this always block override earlier ones.
     if(wb_writeReg && (wb_rd != 5'd0) && (wb_rd == ex_rs2)) begin
         ex_forwardB = 2'b10;
     end
@@ -29,7 +29,7 @@ always @(*) begin
         ex_forwardB = 2'b01;
     end
 
-    // lw, sw数据冒险
+    // Load-store data hazard (lw, sw)
     if(wb_writeReg && (wb_rd != 5'd0) && (wb_rd == me_rs2)) begin
         me_forwardC = 1'b1;
     end
